@@ -13,6 +13,10 @@ import AboutPage from './pages/AboutPage';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import UserSignup from './pages/UserSignup';
+import UserDashboard from './pages/UserDashboard';
+import UserReviews from './pages/UserReviews';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   const location = useLocation();
@@ -34,6 +38,10 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/user-signup" element={<UserSignup />} />
+          <Route path="/user/dashboard" element={<UserDashboard />} />
+          <Route path="/user-reviews" element={<UserReviews />} />
+          <Route path="/user/profile" element={<UserProfile />} />
         </Routes>
       </main>
       {!hideFooter && <Footer />}

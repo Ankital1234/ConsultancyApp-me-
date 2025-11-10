@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 
 export default function ConsultantDashboard(){
   const [profileData, setProfileData] = useState(null);
@@ -80,32 +81,38 @@ export default function ConsultantDashboard(){
           {/* Profile Info or Welcome Message */}
           {profileData ? (
             <div className="flex items-center justify-center mb-4">
-              {(() => {
-                try {
-                  return profileData.profilePhoto && typeof profileData.profilePhoto !== 'string' ? (
-                    <img 
-                      src={URL.createObjectURL(profileData.profilePhoto)} 
-                      alt="Profile" 
-                      className="h-16 w-16 rounded-full object-cover border-3 border-white/50 mr-4"
-                    />
-                  ) : (
-                    <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center mr-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  );
-                } catch (error) {
-                  console.error('Error displaying profile photo:', error);
-                  return (
-                    <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center mr-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  );
-                }
-              })()}
+              <div className="mr-4">
+                {(() => {
+                  try {
+                    return profileData.profilePhoto && typeof profileData.profilePhoto !== 'string' ? (
+                      <Avatar className="h-16 w-16 border-3 border-white/50">
+                        <AvatarImage 
+                          src={URL.createObjectURL(profileData.profilePhoto)} 
+                          alt="Profile" 
+                        />
+                        <AvatarFallback className="bg-white/20 text-white text-lg font-semibold">
+                          {profileData.displayName?.charAt(0).toUpperCase() || 'C'}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Avatar className="h-16 w-16 bg-white/20">
+                        <AvatarFallback className="bg-white/20 text-white text-lg font-semibold">
+                          {profileData.displayName?.charAt(0).toUpperCase() || 'C'}
+                        </AvatarFallback>
+                      </Avatar>
+                    );
+                  } catch (error) {
+                    console.error('Error displaying profile photo:', error);
+                    return (
+                      <Avatar className="h-16 w-16 bg-white/20">
+                        <AvatarFallback className="bg-white/20 text-white text-lg font-semibold">
+                          {profileData.displayName?.charAt(0).toUpperCase() || 'C'}
+                        </AvatarFallback>
+                      </Avatar>
+                    );
+                  }
+                })()}
+              </div>
               <div className="text-left">
                 <h1 className="text-3xl md:text-5xl font-extrabold drop-shadow-sm">Welcome, {profileData.displayName || 'Consultant'}!</h1>
                 <p className="text-sky-100">{profileData.domain || 'Professional'} • {profileData.experience || 'Experienced'}</p>
