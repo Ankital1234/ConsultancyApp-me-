@@ -4,6 +4,9 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Consultants from './pages/Consultants';
 import ConsultantRegistration from './pages/ConsultantRegistration';
+import CompleteProfile from './pages/CompleteProfile';
+import Profile from './pages/Profile';
+import ConsultantProfile from './pages/ConsultantProfile';
 import CompanyRegistration from './pages/CompanyRegistration';
 import ConsultantDashboard from './pages/ConsultantDashboard';
 import AboutPage from './pages/AboutPage';
@@ -22,6 +25,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/consultants" element={<Consultants />} />
           <Route path="/consultant-register" element={<ConsultantRegistration />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/consultant-profile" element={<ConsultantProfile />} />
           <Route path="/consultant/dashboard" element={<ConsultantDashboard />} />
           <Route path="/company/register" element={<CompanyRegistration />} />
           <Route path="/about" element={<AboutPage />} />
