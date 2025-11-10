@@ -1,36 +1,127 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Consultants(){
-  const data = [
+  // Static demo consultants
+  const staticData = [
     {
       name: 'Aarav Mehta',
       role: 'Strategy Consultant',
       summary: '10+ years helping SMBs scale through market entry and pricing strategies.',
       tags: ['Growth', 'Pricing', 'Go-to-Market'],
-      specialty: 'Strategy'
+      specialty: 'Strategy',
+      type: 'demo'
     },
     {
       name: 'Riya Sharma',
       role: 'Technology Consultant',
       summary: 'Cloud modernization and AI adoption for faster, reliable delivery.',
       tags: ['Cloud', 'AI/ML', 'DevOps'],
-      specialty: 'Technology'
+      specialty: 'Technology',
+      type: 'demo'
     },
     {
       name: 'Kabir Singh',
       role: 'Financial Advisory',
       summary: 'Budget planning, valuations, and fundraising support for startups.',
       tags: ['Valuation', 'Fundraising', 'FP&A'],
-      specialty: 'Finance'
+      specialty: 'Finance',
+      type: 'demo'
     }
   ];
 
+  const [data, setData] = useState(staticData);
   const [query, setQuery] = useState('');
   const [specialty, setSpecialty] = useState('All');
   const [sort, setSort] = useState('name');
   const [selected, setSelected] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    // Load completed consultant profiles from localStorage
+    const loadConsultantProfiles = () => {
+      const savedProfiles = [];
+      
+      // Check for completed profiles in localStorage
+      const profileStatus = localStorage.getItem('profileStatus');
+      const isApproved = localStorage.getItem('profileApproved');
+      const savedProfile = localStorage.getItem('consultantCompleteProfile');
+      
+      if (profileStatus === 'approved' && savedProfile) {
+        try {
+          const profileData = JSON.parse(savedProfile);
+          
+          // Transform profile data to match consultant card format
+          const consultantProfile = {
+            id: profileData.id || 'profile-' + Date.now(),
+            name: profileData.displayName || 'Consultant',
+            role: profileData.domain || 'Professional Consultant',
+            summary: profileData.bio || 'Experienced professional offering expert consulting services.',
+            tags: generateTagsFromProfile(profileData),
+            specialty: mapDomainToSpecialty(profileData.domain),
+            type: 'live',
+            profileData: profileData,
+            hourlyRate: profileData.hourlyRate || '$100/hour',
+            experience: profileData.experience || '5+ years',
+            linkedinProfile: profileData.linkedinProfile || '',
+            availableDays: profileData.availableDays || [],
+            timeSlots: profileData.timeSlots || []
+          };
+          
+          savedProfiles.push(consultantProfile);
+        } catch (error) {
+          console.error('Error parsing consultant profile:', error);
+        }
+      }
+      
+      // Combine static data with live profiles
+      setData([...savedProfiles, ...staticData]);
+    };
+
+    loadConsultantProfiles();
+  }, []);
+
+  // Helper function to generate tags from profile data
+  const generateTagsFromProfile = (profileData) => {
+    const tags = [];
+    
+    // Add domain-specific tags
+    if (profileData.domain) {
+      if (profileData.domain.toLowerCase().includes('business')) tags.push('Business Strategy');
+      if (profileData.domain.toLowerCase().includes('technology')) tags.push('Technology');
+      if (profileData.domain.toLowerCase().includes('marketing')) tags.push('Marketing');
+      if (profileData.domain.toLowerCase().includes('finance')) tags.push('Finance');
+      if (profileData.domain.toLowerCase().includes('hr')) tags.push('HR');
+    }
+    
+    // Add experience-based tags
+    if (profileData.experience) {
+      if (profileData.experience.includes('5+')) tags.push('Experienced');
+      if (profileData.experience.includes('10+')) tags.push('Senior Expert');
+    }
+    
+    // Add default tags if none generated
+    if (tags.length === 0) {
+      tags.push('Consulting', 'Expert Advice');
+    }
+    
+    return tags.slice(0, 4); // Limit to 4 tags
+  };
+
+  // Helper function to map domain to specialty
+  const mapDomainToSpecialty = (domain) => {
+    if (!domain) return 'Strategy';
+    
+    const domainLower = domain.toLowerCase();
+    if (domainLower.includes('business') || domainLower.includes('strategy')) return 'Strategy';
+    if (domainLower.includes('technology') || domainLower.includes('it')) return 'Technology';
+    if (domainLower.includes('finance') || domainLower.includes('financial')) return 'Finance';
+    if (domainLower.includes('marketing') || domainLower.includes('sales')) return 'Operations';
+    if (domainLower.includes('hr') || domainLower.includes('human')) return 'Operations';
+    
+    return 'Strategy';
+  };
 
   useEffect(() => {
     const onKey = (e) => {
@@ -87,15 +178,74 @@ export default function Consultants(){
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {list.map((c, i) => (
-          <div key={i} className="group border rounded-lg p-5 hover:shadow-lg transition bg-white hover:-translate-y-0.5 transform">
+          <div key={i} className={`group border rounded-lg p-5 hover:shadow-lg transition bg-white hover:-translate-y-0.5 transform ${
+            c.type === 'live' ? 'border-blue-200 bg-blue-50/30' : ''
+          }`}>
             <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">{c.name}</h3>
-                <p className="text-sm text-gray-600">{c.role}</p>
+              <div className="flex items-center space-x-3">
+                {/* Profile Photo */}
+                <div className="flex-shrink-0">
+                  {c.type === 'live' && c.profileData?.profilePhoto ? (
+                    (() => {
+                      try {
+                        return (
+                          <img 
+                            src={typeof c.profileData.profilePhoto === 'string' 
+                              ? c.profileData.profilePhoto 
+                              : URL.createObjectURL(c.profileData.profilePhoto)} 
+                            alt={c.name}
+                            className="h-12 w-12 rounded-full object-cover border-2 border-blue-200"
+                          />
+                        );
+                      } catch (error) {
+                        console.error('Error displaying profile photo:', error);
+                        return (
+                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span className="text-white font-semibold text-lg">
+                              {c.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        );
+                      }
+                    })()
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                      <span className="text-white font-semibold text-lg">
+                        {c.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-lg font-semibold">{c.name}</h3>
+                    {c.type === 'live' && (
+                      <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">Live Profile</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">{c.role}</p>
+                  {c.type === 'live' && c.experience && (
+                    <p className="text-xs text-blue-600 mt-1">💼 {c.experience}</p>
+                  )}
+                </div>
               </div>
-              <span className="inline-block px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded">Featured</span>
+              {c.type === 'demo' && (
+                <span className="inline-block px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded">Featured</span>
+              )}
             </div>
+            
             <p className="mt-3 text-gray-700 text-sm">{c.summary}</p>
+            
+            {/* Additional info for live profiles */}
+            {c.type === 'live' && (
+              <div className="mt-3 flex items-center justify-between text-xs">
+                <span className="text-blue-600 font-medium">💰 {c.hourlyRate}</span>
+                {c.availableDays && c.availableDays.length > 0 && (
+                  <span className="text-green-600">✓ Available</span>
+                )}
+              </div>
+            )}
+            
             <div className="mt-4 flex flex-wrap gap-2">
               {c.tags.map(t => (
                 <button
@@ -107,6 +257,7 @@ export default function Consultants(){
                 </button>
               ))}
             </div>
+            
             <div className="mt-5 flex gap-2">
               <button
                 onClick={() => { setSelected(c); setShowModal(true); }}
@@ -115,10 +266,23 @@ export default function Consultants(){
                 View Profile
               </button>
               <button
-                onClick={() => { setSelected(c); setShowModal(true); }}
-                className="flex-1 px-3 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800"
+                onClick={() => { 
+                  if (c.type === 'live') {
+                    setToast('Redirecting to booking page...');
+                    setTimeout(() => {
+                      window.location.href = '/user-signup';
+                    }, 1000);
+                  } else {
+                    setSelected(c); setShowModal(true);
+                  }
+                }}
+                className={`flex-1 px-3 py-2 rounded-lg hover:opacity-90 ${
+                  c.type === 'live' 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-blue-700 text-white hover:bg-blue-800'
+                }`}
               >
-                Book Call
+                {c.type === 'live' ? 'Book Now' : 'Book Call'}
               </button>
             </div>
           </div>
@@ -132,12 +296,55 @@ export default function Consultants(){
       {showModal && selected && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={() => setShowModal(false)}></div>
-          <div className="absolute inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 top-24 md:w-[560px] bg-white rounded-lg shadow-lg border animate-fade-in-up">
+          <div className="absolute inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 top-24 md:w-[560px] bg-white rounded-lg shadow-lg border animate-fade-in-up max-h-[80vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold">{selected.name}</h3>
-                  <p className="text-sm text-gray-600">{selected.role}</p>
+                <div className="flex items-center space-x-3">
+                  {/* Profile Photo in Modal */}
+                  <div className="flex-shrink-0">
+                    {selected.type === 'live' && selected.profileData?.profilePhoto ? (
+                      (() => {
+                        try {
+                          return (
+                            <img 
+                              src={typeof selected.profileData.profilePhoto === 'string' 
+                                ? selected.profileData.profilePhoto 
+                                : URL.createObjectURL(selected.profileData.profilePhoto)} 
+                              alt={selected.name}
+                              className="h-16 w-16 rounded-full object-cover border-2 border-blue-200"
+                            />
+                          );
+                        } catch (error) {
+                          console.error('Error displaying profile photo in modal:', error);
+                          return (
+                            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                              <span className="text-white font-semibold text-xl">
+                                {selected.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          );
+                        }
+                      })()
+                    ) : (
+                      <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <span className="text-white font-semibold text-xl">
+                          {selected.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-xl font-semibold">{selected.name}</h3>
+                      {selected.type === 'live' && (
+                        <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">Live Profile</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">{selected.role}</p>
+                    {selected.type === 'live' && selected.experience && (
+                      <p className="text-xs text-blue-600 mt-1">💼 {selected.experience}</p>
+                    )}
+                  </div>
                 </div>
                 <button
                   aria-label="Close"
@@ -147,7 +354,38 @@ export default function Consultants(){
                   ✕
                 </button>
               </div>
+              
               <p className="mt-4 text-gray-700">{selected.summary}</p>
+              
+              {/* Additional details for live profiles */}
+              {selected.type === 'live' && (
+                <div className="mt-4 space-y-3 p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Hourly Rate:</span>
+                    <span className="text-sm font-semibold text-blue-600">{selected.hourlyRate}</span>
+                  </div>
+                  {selected.availableDays && selected.availableDays.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Available Days:</span>
+                      <span className="text-sm text-green-600">{selected.availableDays.join(', ')}</span>
+                    </div>
+                  )}
+                  {selected.linkedinProfile && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">LinkedIn:</span>
+                      <a 
+                        href={selected.linkedinProfile} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        View Profile
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div className="mt-4 flex flex-wrap gap-2">
                 {selected.tags.map(t => (
                   <span key={t} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">{t}</span>
@@ -156,16 +394,34 @@ export default function Consultants(){
 
               <div className="mt-6 grid sm:grid-cols-2 gap-3">
                 <button
-                  onClick={() => { setToast('Profile shared to your email.'); setTimeout(()=> setToast(''), 2500); }}
+                  onClick={() => { 
+                    setToast('Profile shared to your email.'); 
+                    setTimeout(()=> setToast(''), 2500); 
+                  }}
                   className="px-4 py-2 border rounded-lg hover:bg-gray-50"
                 >
                   Share Profile
                 </button>
                 <button
-                  onClick={() => { setToast('Call request sent. We will contact you shortly.'); setTimeout(()=> setToast(''), 2500); setShowModal(false); }}
-                  className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800"
+                  onClick={() => { 
+                    if (selected.type === 'live') {
+                      setToast('Redirecting to booking page...');
+                      setTimeout(() => {
+                        window.location.href = '/user-signup';
+                      }, 1000);
+                    } else {
+                      setToast('Call request sent. We will contact you shortly.'); 
+                      setTimeout(()=> setToast(''), 2500); 
+                      setShowModal(false);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg hover:opacity-90 ${
+                    selected.type === 'live'
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-blue-700 text-white hover:bg-blue-800'
+                  }`}
                 >
-                  Request a Call
+                  {selected.type === 'live' ? 'Book Session Now' : 'Request a Call'}
                 </button>
               </div>
             </div>
